@@ -20,9 +20,11 @@ stored, are at your own discretion
 """
 
 import datetime
+import time
 
 
 class SimpleCache:
+    TTL = 5
 
     def __init__(self):
         # TODO: have a 30 second TTL
@@ -54,9 +56,12 @@ class SimpleCache:
         self.cache[k] = {'date_accessed': datetime.datetime.now(), 'value': v}
 
     def ttl_check(self):
-        for k in self.cache:
-            if self.cache[k]['date_accessed'] < datetime.datetime.now() - datetime.timedelta(seconds=30):
-                self.cache.pop(k)
+        """
+        find items that need to be deleted, pop from cache
+        """
+        store = [item for item in self.cache if self.cache[item]['date_accessed'] < datetime.datetime.now() - datetime.timedelta(seconds=self.TTL)]
+        for k in store:
+            self.cache.pop(k)
 
     def remove_oldest(self):
         """
@@ -94,9 +99,8 @@ if __name__ == '__main__':
     print()
 
     while True:
+        time.sleep(1)
         cache.ttl_check()
-
-    # should delete nothing
-
+        print("cache size %s " % cache.size)
 
 
