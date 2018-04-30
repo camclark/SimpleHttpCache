@@ -30,7 +30,6 @@ class ServerCacheHandler(BaseHTTPRequestHandler):
                 self.send_response(200)
                 self.send_header('Content-Type', 'application/json')
                 self.end_headers()
-                # for pretty printing:
                 self.wfile.write(record)
 
             else:
@@ -57,6 +56,7 @@ class ServerCacheHandler(BaseHTTPRequestHandler):
                 post_json_dict = json.loads(post_data)
 
                 try:
+                    # set to redis, if key is missing assume malformed
                     r.set(post_json_dict["id"], {'id': post_json_dict["id"], 'message': post_json_dict["message"]})
 
                     # ttl functionality
