@@ -30,22 +30,25 @@ class ServerCacheHandler(BaseHTTPRequestHandler):
                 self.send_response(200)
                 self.send_header('Content-Type', 'application/json')
                 self.end_headers()
+                self.wfile.write(record)
                 # TODO: fix json encoding
             else:
                 self.send_response(400, 'Bad Request: Record does not exist')
                 self.send_header('Content-Type', 'application/json')
                 self.end_headers()
+                self.wfile.write("Resource not found".encode("utf-8"))
 
         else:
             self.send_response(403)
             self.send_header('Content-Type', 'application/json')
             self.end_headers()
+            self.wfile.write("Forbidden".encode("utf-8"))
 
     def do_POST(self):
         # check correct path
         if None is not re.search('messages/*', self.path):
             # use common graphical interface to get content_type
-            content_type, pdict = cgi.parse_header(self.headers.get('content-type'))
+            content_type, p_dict = cgi.parse_header(self.headers.get('content-type'))
             if content_type == 'application/json':
                 length = int(self.headers.get_all('content-length')[0])
                 post_data = self.rfile.read(length)
