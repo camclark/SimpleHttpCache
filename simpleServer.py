@@ -1,6 +1,8 @@
 from http.server import HTTPServer, BaseHTTPRequestHandler
 import redis
-import time
+import re
+import cgi
+import json
 
 CACHE_SERVER_PORT_NUMBER = 8000
 CACHE_SERVER_ADDRESS = 'localhost'
@@ -14,29 +16,36 @@ r = redis.Redis(
     port=REDIS_SERVER_PORT_NUMBER)
 
 # test set
-r.set('foo', {'bar': 'bar2'})
-r.expire('foo', 30)
-print('set')
-
+r.set(2019, {'id': 2019, 'message': 'Telstra 2019 Graduate Program'})
+r.expire('2019', 30)
+# print('set')
 
 class ServerCacheHandler(BaseHTTPRequestHandler):
 
     def do_GET(self):
-        # test get
-        value = r.get('foo')
-        print(value)
-        print(type(value))
+        if None != re.search('/messages/*', self.path):
+            recordID = self.path.split('/')[-1]
+            record = r.get(recordID)
 
-        time.sleep(31)
-        # test get to fail as TTL has expired
-        value = r.get('foo')
-        print(value)
-        print(type(value))
+            if record is not None:
+                self.send_response(200)
+                self.send_header('Content-Type', 'application/json')
+                self.end_headers()
+                self.wfile.write(record)
+                print(record)
+                print(type(record))
+                # TODO: fix json encoding
+            else:
+                self.send_response(400, 'Bad Request: Record does not exist')
+                self.send_header('Content-Type', 'application/json')
+                self.end_headers()
+                self.wfile.write("Resource not found".encode("utf-8"))
 
-        if value is None:
-            print("Resource not found", "add appropriate response code")
-
-        return
+        else:
+            self.send_response(403)
+            self.send_header('Content-Type', 'application/json')
+            self.end_headers()
+            self.wfile.write("Forbidden".encode("utf-8"))
 
     def do_POST(self):
         pass
