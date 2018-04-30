@@ -31,9 +31,9 @@ class ServerCacheHandler(BaseHTTPRequestHandler):
                 self.send_header('Content-Type', 'application/json')
                 self.end_headers()
                 self.wfile.write(record)
-                # TODO: fix json encoding
+
             else:
-                self.send_response(400, 'Bad Request: Record does not exist')
+                self.send_response(404, 'Bad Request: Record does not exist')
                 self.send_header('Content-Type', 'application/json')
                 self.end_headers()
                 self.wfile.write("Resource not found".encode("utf-8"))
@@ -45,6 +45,7 @@ class ServerCacheHandler(BaseHTTPRequestHandler):
             self.wfile.write("Forbidden".encode("utf-8"))
 
     def do_POST(self):
+        TTL_SECONDS = 30
         # check correct path
         if None is not re.search('messages/*', self.path):
             # use common graphical interface to get content_type
@@ -54,20 +55,26 @@ class ServerCacheHandler(BaseHTTPRequestHandler):
                 post_data = self.rfile.read(length)
                 post_json_dict = json.loads(post_data)
 
-                # saved # TODO: make TTL variable
-                r.set(post_json_dict["id"], {'id': post_json_dict["id"], 'message': post_json_dict["message"]})
-                r.expire(post_json_dict["id"], 30)
+                try:
+                    r.set(post_json_dict["id"], {'id': post_json_dict["id"], 'message': post_json_dict["message"]})
 
-                self.send_response(200)
-                self.send_header('Content-Type', 'application/json')
-                self.end_headers()
+                    # ttl functionality
+                    if "ttl" in post_json_dict:
+                        r.expire(post_json_dict["id"], post_json_dict["id"])
+                    else:
+                        r.expire(post_json_dict["id"], TTL_SECONDS)
 
+                    self.send_response(200)
+                    self.send_header('Content-Type', 'application/json')
+                    self.end_headers()
+                except KeyError:
+                    self.send_response(400)
+                    self.end_headers()
             else:
                 self.send_response(200)
                 self.end_headers()
         else:
             self.send_response(403)
-            self.send_header('Content-Type', 'application/json')
             self.end_headers()
         pass
 
