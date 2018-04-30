@@ -11,9 +11,7 @@ REDIS_SERVER_PORT_NUMBER = 6379
 REDIS_SERVER_ADDRESS = 'localhost'
 
 # create instance of server
-r = redis.Redis(
-    host=REDIS_SERVER_ADDRESS,
-    port=REDIS_SERVER_PORT_NUMBER)
+r = redis.Redis(host=REDIS_SERVER_ADDRESS, port=REDIS_SERVER_PORT_NUMBER)
 
 
 class ServerCacheHandler(BaseHTTPRequestHandler):
@@ -47,8 +45,9 @@ class ServerCacheHandler(BaseHTTPRequestHandler):
     def do_POST(self):
         TTL_SECONDS = 30
         # check correct path
-        if None is not re.search('messages/*', self.path):
-            # use common graphical interface to get content_type
+        path = str(self.path)
+        if path == '/messages':
+            # get content type
             content_type, p_dict = cgi.parse_header(self.headers.get('content-type'))
             if content_type == 'application/json':
                 length = int(self.headers.get_all('content-length')[0])
@@ -74,6 +73,13 @@ class ServerCacheHandler(BaseHTTPRequestHandler):
             else:
                 self.send_response(400)
                 self.end_headers()
+
+        elif path == '/clear':
+            # clear cache of redis
+            r.flushall()
+            self.send_response(200)
+            self.end_headers()
+
         else:
             self.send_response(403)
             self.end_headers()
