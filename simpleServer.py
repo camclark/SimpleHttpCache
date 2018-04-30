@@ -27,22 +27,24 @@ class ServerCacheHandler(BaseHTTPRequestHandler):
 
             # if record exists
             if record is not None:
+                record = json.dumps(record.decode())
+
                 self.send_response(200)
                 self.send_header('Content-Type', 'application/json')
                 self.end_headers()
-                self.wfile.write(record)
+                self.wfile.write(record.encode())
 
             else:
                 self.send_response(404, 'Bad Request: Record does not exist')
                 self.send_header('Content-Type', 'application/json')
                 self.end_headers()
-                self.wfile.write("Resource not found".encode("utf-8"))
+                self.wfile.write("Bad Request: Resource not found".encode("utf-8"))
 
         else:
             self.send_response(403)
             self.send_header('Content-Type', 'application/json')
             self.end_headers()
-            self.wfile.write("Forbidden".encode("utf-8"))
+            self.wfile.write("Forbidden: GET requests not accepted here".encode("utf-8"))
 
     def do_POST(self):
         TTL_SECONDS = 30
@@ -60,7 +62,7 @@ class ServerCacheHandler(BaseHTTPRequestHandler):
 
                     # ttl functionality
                     if "ttl" in post_json_dict:
-                        r.expire(post_json_dict["id"], post_json_dict["id"])
+                        r.expire(post_json_dict["id"], post_json_dict["ttl"])
                     else:
                         r.expire(post_json_dict["id"], TTL_SECONDS)
 
@@ -82,7 +84,7 @@ class ServerCacheHandler(BaseHTTPRequestHandler):
 def run():
     server_url = (CACHE_SERVER_ADDRESS, CACHE_SERVER_PORT_NUMBER)
     http_start = HTTPServer(server_url, ServerCacheHandler)
-    print("Server Started, Running on Port: ", CACHE_SERVER_PORT_NUMBER)
+    print("Server Started, Running on Port:", CACHE_SERVER_PORT_NUMBER)
     http_start.serve_forever()
 
 
