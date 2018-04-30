@@ -27,12 +27,11 @@ class ServerCacheHandler(BaseHTTPRequestHandler):
 
             # if record exists
             if record is not None:
-                record = json.dumps(record.decode())
-
                 self.send_response(200)
                 self.send_header('Content-Type', 'application/json')
                 self.end_headers()
-                self.wfile.write(record.encode())
+                # for pretty printing:
+                self.wfile.write(record)
 
             else:
                 self.send_response(404, 'Bad Request: Record does not exist')
@@ -73,12 +72,11 @@ class ServerCacheHandler(BaseHTTPRequestHandler):
                     self.send_response(400)
                     self.end_headers()
             else:
-                self.send_response(200)
+                self.send_response(400)
                 self.end_headers()
         else:
             self.send_response(403)
             self.end_headers()
-        pass
 
 
 def run():
